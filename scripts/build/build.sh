@@ -7,8 +7,19 @@
 GOPATH=/go
 REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 
+
+
 cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
+
+
+cd .. 
+git clone https://github.com/bergquist/grafana-extensions extensions
+cd extensions
+./build.sh
+
+cd ../grafana
+
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building a release from tag $CIRCLE_TAG"
