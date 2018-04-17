@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/initialization"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
@@ -56,7 +57,9 @@ func (g *GrafanaServerImpl) Start() error {
 	g.initLogging()
 	g.writePIDFile()
 
-	initSql()
+	// initSql
+	engine := sqlstore.NewEngine() // TODO: this should return an error
+	sqlstore.EnsureAdminUser()
 
 	metrics.Init(setting.Cfg)
 	search.Init()
@@ -93,14 +96,13 @@ func (g *GrafanaServerImpl) Start() error {
 		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
+	for _, fn := range initialization.GetAllInitFuncs() {
+		g.childRoutines.Go(func() error { return fn(g.context, engine) })
+	}
+
 	sendSystemdNotification("READY=1")
 
 	return g.startHttpServer()
-}
-
-func initSql() {
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
 }
 
 func (g *GrafanaServerImpl) initLogging() {
