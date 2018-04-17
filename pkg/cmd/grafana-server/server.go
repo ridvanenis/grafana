@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/dashboards"
+
 	"github.com/grafana/grafana/pkg/initialization"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
@@ -96,13 +98,25 @@ func (g *GrafanaServerImpl) Start() error {
 		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
+	sl := &GrafanaServiceLocator{}
 	for _, fn := range initialization.GetAllInitFuncs() {
-		g.childRoutines.Go(func() error { return fn(g.context, engine) })
+		g.childRoutines.Go(func() error { return fn(g.context, engine, setting.Cfg, sl) })
 	}
 
 	sendSystemdNotification("READY=1")
 
 	return g.startHttpServer()
+}
+
+type GrafanaServiceLocator struct {
+}
+
+func (gsl *GrafanaServiceLocator) GetDashboardService() dashboards.DashboardService {
+	return dashboards.NewService()
+}
+
+func (gsl *GrafanaServiceLocator) GetDashboardProvisioningService() dashboards.DashboardProvisioningService {
+	return dashboards.NewProvisioningService()
 }
 
 func (g *GrafanaServerImpl) initLogging() {
