@@ -12,8 +12,8 @@ type ServiceLocator interface {
 	GetDashboardService() dashboards.DashboardService
 	GetDashboardProvisioningService() dashboards.DashboardProvisioningService
 }
-
-type InitFunc func(ctx context.Context, engine *xorm.Engine, settings *ini.File, sl ServiceLocator) error
+type InjectServicesFunc func(s Service)
+type InitFunc func(ctx context.Context, engine *xorm.Engine, settings *ini.File, sl ServiceLocator, injectDeps InjectServicesFunc) error
 
 var initFuncs = []InitFunc{}
 

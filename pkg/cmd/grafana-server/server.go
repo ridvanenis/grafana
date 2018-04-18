@@ -100,7 +100,7 @@ func (g *GrafanaServerImpl) Start() error {
 
 	sl := &GrafanaServiceLocator{}
 	for _, fn := range initialization.GetAllInitFuncs() {
-		g.childRoutines.Go(func() error { return fn(g.context, engine, setting.Cfg, sl) })
+		g.childRoutines.Go(func() error { return fn(g.context, engine, setting.Cfg, sl, registerServices) })
 	}
 
 	sendSystemdNotification("READY=1")
@@ -108,8 +108,14 @@ func (g *GrafanaServerImpl) Start() error {
 	return g.startHttpServer()
 }
 
-type GrafanaServiceLocator struct {
+func registerServices(s initialization.Service) {
+	dps, ok := s.(initialization.SetDashboardProvisioningService)
+	if ok {
+		dps.SetDashboardProvisioningService(dashboards.NewProvisioningService())
+	}
 }
+
+type GrafanaServiceLocator struct{}
 
 func (gsl *GrafanaServiceLocator) GetDashboardService() dashboards.DashboardService {
 	return dashboards.NewService()
