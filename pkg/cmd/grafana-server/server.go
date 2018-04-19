@@ -98,9 +98,10 @@ func (g *GrafanaServerImpl) Start() error {
 		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
-	sl := &GrafanaServiceLocator{}
 	for _, fn := range initialization.GetAllInitFuncs() {
-		g.childRoutines.Go(func() error { return fn(g.context, engine, setting.Cfg, sl, registerServices) })
+		g.childRoutines.Go(func() error {
+			return fn(g.context, engine, setting.Cfg, registerServices)
+		})
 	}
 
 	sendSystemdNotification("READY=1")
@@ -113,16 +114,6 @@ func registerServices(s initialization.Service) {
 	if ok {
 		dps.SetDashboardProvisioningService(dashboards.NewProvisioningService())
 	}
-}
-
-type GrafanaServiceLocator struct{}
-
-func (gsl *GrafanaServiceLocator) GetDashboardService() dashboards.DashboardService {
-	return dashboards.NewService()
-}
-
-func (gsl *GrafanaServiceLocator) GetDashboardProvisioningService() dashboards.DashboardProvisioningService {
-	return dashboards.NewProvisioningService()
 }
 
 func (g *GrafanaServerImpl) initLogging() {
