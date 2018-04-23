@@ -100,7 +100,13 @@ func (g *GrafanaServerImpl) Start() error {
 
 	for _, fn := range initialization.GetAllInitFuncs() {
 		g.childRoutines.Go(func() error {
-			return fn(g.context, engine, setting.Cfg, registerServices)
+			extension, err := fn()
+			if err != nil {
+				return err
+			}
+			extension.Init(g.context, engine, setting.Cfg)
+			registerServices(extension)
+			return extension.Run()
 		})
 	}
 
